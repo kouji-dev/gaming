@@ -1,0 +1,7 @@
+{
+  "name": "core",
+  "version": "1.0.0",
+  "description": "contains core business logic (DDD)",
+  "main": "index.js",
+  "license": "MIT"
+}
