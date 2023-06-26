@@ -1,8 +1,14 @@
 import {Order} from "./order";
 import {Division} from "./division";
 import {DivisionOrderError} from "./division-order.error";
+import {DiscountService} from "./discount.service";
 
 export class OrderPricingService {
+    private discountService: DiscountService;
+
+    constructor(discountService: DiscountService) {
+        this.discountService = discountService;
+    }
 
     public price(order: Readonly<Order>, divisions: ReadonlyArray<Division>) {
         const currentDivisionIndex = this.getDivisionIndex(divisions, order.currentDivision);
@@ -10,7 +16,8 @@ export class OrderPricingService {
 
         this.validateDivisions(currentDivisionIndex, desiredDivisionIndex);
 
-        return this.sumDivisionsPrice(currentDivisionIndex, desiredDivisionIndex, divisions);
+        const totalDivisionsPrice = this.sumDivisionsPrice(currentDivisionIndex, desiredDivisionIndex, divisions);
+        return this.discountService.applyDiscount(order.discount, totalDivisionsPrice);
     }
 
     private validateDivisions(currentDivisionIndex: number, desiredDivisionIndex: number) {
