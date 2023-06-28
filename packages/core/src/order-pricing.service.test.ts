@@ -4,6 +4,7 @@ import {Division} from "./division";
 import {Discount} from "./discount";
 import {DiscountType} from "./discountType";
 import {DiscountService} from "./discount.service";
+import {OrderOptionsService} from "./order-options.service";
 
 // this is just a price mock per division
 const pricePerDivision = 5;
@@ -19,9 +20,12 @@ let divisions: Division[];
 
 beforeEach(() => {
     const discountService: DiscountService = {
-        applyDiscount: jest.fn((discount, value) => value)
+        applyDiscount: jest.fn((value) => value)
     }
-    orderPricingService = new OrderPricingService(discountService);
+    const orderOptionsService: OrderOptionsService = {
+        applyOptions: jest.fn((a) => a)
+    };
+    orderPricingService = new OrderPricingService(discountService, orderOptionsService);
 
     divisions = [
         new Division("bronze I", pricePerDivision),
@@ -66,7 +70,10 @@ describe('Order Pricing Service', function () {
         const discountService: DiscountService = {
             applyDiscount: jest.fn().mockReturnValue(totalPrice - discountAmount)
         }
-        orderPricingService = new OrderPricingService(discountService);
+        const orderOptionsService: OrderOptionsService = {
+            applyOptions: jest.fn((a) => a)
+        };
+        orderPricingService = new OrderPricingService(discountService, orderOptionsService);
         const discount = new Discount(discountAmount)
         const order = new Order(currentDivision, desiredDivision, discount);
         const price: number = orderPricingService.price(order, divisions);
@@ -78,10 +85,26 @@ describe('Order Pricing Service', function () {
         const discountService: DiscountService = {
             applyDiscount: jest.fn().mockReturnValue(totalPrice * (100 - discountPercentage))
         }
-        orderPricingService = new OrderPricingService(discountService);
+        const orderOptionsService: OrderOptionsService = {
+            applyOptions: jest.fn((a) => a)
+        };
+        orderPricingService = new OrderPricingService(discountService, orderOptionsService);
         const discount = new Discount(discountPercentage, DiscountType.PERCENT)
         const order = new Order(currentDivision, desiredDivision, discount);
         const price: number = orderPricingService.price(order, divisions);
         expect(price).toEqual(totalPrice * (100 - discountPercentage));
+    })
+
+    test("should apply add 20% when selecting soloOnly option", () => {
+        const discountService: DiscountService = {
+            applyDiscount: jest.fn((v) => v)
+        }
+        const orderOptionsService: OrderOptionsService = {
+            applyOptions: jest.fn((a) => a * 1.2)
+        };
+        orderPricingService = new OrderPricingService(discountService, orderOptionsService);
+        const order = new Order(currentDivision, desiredDivision, undefined, ["soloOnly"]);
+        const price: number = orderPricingService.price(order, divisions);
+        expect(price).toEqual(totalPrice * 1.2);
     })
 });
